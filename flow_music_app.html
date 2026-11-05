@@ -1,0 +1,155 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#101114">
+<title>FLOW — Synchronisation musicale</title>
+<style>
+:root{--bg:#0d0e11;--panel:#17191e;--panel2:#20232a;--line:#30343d;--text:#f4f5f7;--muted:#9da3ae;--red:#ff454f;--accent:#b6a0ff}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+button,input,textarea{font:inherit}button{cursor:pointer;border:0;color:inherit}
+.app{min-height:100vh;padding:22px clamp(16px,4vw,54px) 36px;max-width:1500px;margin:auto}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;margin-bottom:28px}
+.brand{display:flex;align-items:center;gap:11px;font-weight:900;letter-spacing:.16em;font-size:20px}.logo{width:34px;height:34px;border-radius:11px;background:linear-gradient(145deg,#ff626a,#b83c55);display:grid;place-items:center;font-size:18px}
+.pill{font-size:12px;color:var(--muted);border:1px solid var(--line);border-radius:999px;padding:7px 11px}
+h1{font-size:clamp(27px,4vw,42px);line-height:1.08;margin:0 0 9px;letter-spacing:-.04em}h2{font-size:20px;margin:0 0 14px}p{color:var(--muted);line-height:1.55;margin:0}
+.view{display:none}.view.active{display:block}.intro{margin-bottom:26px}
+.btn{background:var(--red);padding:12px 17px;border-radius:12px;font-weight:750;color:white;transition:.15s}.btn:hover{filter:brightness(1.1)}.btn.secondary{background:var(--panel2);border:1px solid var(--line);color:var(--text)}.btn.ghost{background:transparent;border:1px solid var(--line);color:var(--muted)}.btn:disabled{opacity:.4;cursor:not-allowed}
+.section-head{display:flex;justify-content:space-between;align-items:center;gap:12px;margin:28px 0 14px}
+.library{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.track{background:var(--panel);border:1px solid var(--line);border-radius:17px;padding:17px;min-height:150px;display:flex;flex-direction:column;justify-content:space-between;gap:14px}
+.track-top{display:flex;justify-content:space-between;align-items:flex-start}.cover{width:42px;height:42px;border-radius:12px;background:linear-gradient(145deg,#34303f,#1e2028);display:grid;place-items:center;font-size:20px}
+.track h3{margin:13px 0 4px;font-size:16px}.track small{color:var(--muted)}.track-actions{display:flex;gap:8px}.track-actions button{flex:1}
+.empty{padding:36px 20px;border:1px dashed #3b3f49;border-radius:18px;text-align:center;color:var(--muted);grid-column:1/-1}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:clamp(16px,3vw,25px);margin-bottom:16px}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:14px}.field{display:flex;flex-direction:column;gap:7px}.field.full{grid-column:1/-1}label{font-size:13px;color:#c8cbd2;font-weight:650}
+input[type=text],textarea{width:100%;background:#101216;border:1px solid var(--line);border-radius:11px;padding:12px;color:var(--text);outline:none}textarea{min-height:160px;resize:vertical;line-height:1.55}input:focus,textarea:focus{border-color:#8b7bd0}
+.filebox{border:1px dashed #444955;background:#111318;border-radius:12px;padding:13px}.filebox input{display:block;width:100%;margin-top:8px;color:var(--muted);font-size:13px}.file-name{font-size:12px;color:var(--muted);margin-top:7px;overflow-wrap:anywhere}
+.actions{display:flex;flex-wrap:wrap;gap:9px;margin-top:17px}.back{background:none;color:var(--muted);padding:7px 0;margin-bottom:16px}
+.player-head{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-bottom:17px}.player-head h1{font-size:clamp(22px,3vw,32px);margin:0}
+.player{background:linear-gradient(145deg,#191b22,#111318);border:1px solid var(--line);border-radius:20px;padding:clamp(15px,3vw,26px)}
+.modebar{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.modebar .btn{padding:9px 13px;font-size:13px}.modebar .selected{background:#f4f4f5;color:#15161a}
+.lyrics-stage{position:relative;margin:20px 0 14px;background:#0c0d10;border:1px solid #2d3038;border-radius:15px;min-height:170px;overflow:hidden;padding:25px 22px}
+.lyrics-line{font-size:clamp(22px,3.2vw,42px);font-weight:800;line-height:1.6;letter-spacing:-.035em;display:flex;flex-wrap:wrap;column-gap:.28em;row-gap:.05em;align-items:baseline}
+.word{color:#656b76;position:relative;transition:color .08s}.word.done{color:#f5f5f6}.word.current{color:#fff;text-shadow:0 0 20px #ff455f}
+.word.current:after{content:"";position:absolute;left:0;right:0;bottom:-4px;height:3px;background:var(--red);border-radius:5px;box-shadow:0 0 12px #ff455f}
+.progress{height:4px;background:#30333b;border-radius:9px;overflow:hidden;margin-top:17px}.progress>span{display:block;height:100%;width:0;background:var(--red)}
+.controls{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}.transport{display:flex;gap:9px;align-items:center}.play{width:48px;height:48px;border-radius:50%;font-size:18px;background:var(--red);font-weight:900}.time{font-variant-numeric:tabular-nums;color:var(--muted);font-size:13px}
+.calibration{display:grid;grid-template-columns:1fr auto;gap:15px;align-items:center}.calibration strong{display:block;margin-bottom:4px}.big-tap{min-width:180px;min-height:70px;font-size:17px}
+.hint{font-size:12px;color:var(--muted);margin-top:10px}
+.word-list{display:flex;flex-wrap:wrap;gap:7px;margin-top:13px}.chip{background:#242730;border:1px solid #383d48;border-radius:8px;padding:6px 9px;color:#aeb4c0;font-size:12px}.chip.done{border-color:#6b5aa9;color:#e0d8ff}.chip.next{border-color:var(--red);color:white}
+.range{width:100%;accent-color:var(--red)}
+.notice{font-size:12px;color:#e2c58b;background:#2b2418;border:1px solid #54452b;padding:10px 12px;border-radius:10px;margin-top:12px}
+.hidden{display:none!important}
+@media(max-width:700px){.app{padding:16px 14px 28px}.formgrid{grid-template-columns:1fr}.field.full{grid-column:auto}.calibration{grid-template-columns:1fr}.big-tap{width:100%}.player-head{align-items:flex-start;flex-direction:column}.controls{align-items:flex-start}.lyrics-stage{min-height:140px}}
+@media(orientation:landscape) and (max-height:520px){.app{padding-top:10px}.top{margin-bottom:12px}.intro{margin-bottom:12px}.lyrics-stage{min-height:100px;margin:10px 0;padding:12px 18px}.lyrics-line{font-size:clamp(20px,4vw,34px)}.player{padding:13px 18px}}
+</style>
+</head>
+<body>
+<div class="app">
+<header class="top"><div class="brand"><span class="logo">▶</span> FLOW</div><span class="pill">STUDIO DE SYNCHRONISATION</span></header>
+
+<section id="libraryView" class="view active">
+ <div class="intro"><h1>Ta musique.<br>Ton rythme.</h1><p>Importe tes morceaux, synchronise les paroles et entraîne-toi sur l'instrumental.</p></div>
+ <button class="btn" id="newTrackBtn">＋ Importer un morceau</button>
+ <div class="section-head"><h2>Ma bibliothèque</h2><span class="pill" id="trackCount">0 morceau</span></div>
+ <div class="library" id="library"></div>
+</section>
+
+<section id="importView" class="view">
+ <button class="back" data-back>← Retour à la bibliothèque</button>
+ <div class="intro"><h1>Ajouter un morceau</h1><p>Importe les deux versions audio pour pouvoir passer de l'original à l'instrumental pendant ton entraînement.</p></div>
+ <div class="panel">
+  <div class="formgrid">
+   <div class="field full"><label for="trackTitle">Nom du morceau</label><input id="trackTitle" type="text" placeholder="Ex. : Mon morceau"></div>
+   <div class="field"><label>Audio original — avec la voix</label><div class="filebox"><input id="originalFile" type="file" accept="audio/*"><div class="file-name" id="originalName">Aucun fichier sélectionné</div></div></div>
+   <div class="field"><label>Version instrumentale — sans la voix</label><div class="filebox"><input id="instrumentalFile" type="file" accept="audio/*"><div class="file-name" id="instrumentalName">Aucun fichier sélectionné</div></div></div>
+   <div class="field full"><label for="lyricsInput">Paroles</label><textarea id="lyricsInput" placeholder="Colle ici les paroles du morceau…&#10;&#10;Une ligne ou un couplet après l'autre."></textarea></div>
+  </div>
+  <div class="actions"><button class="btn" id="saveTrackBtn">Enregistrer dans ma bibliothèque</button><button class="btn secondary" data-back>Annuler</button></div>
+  <div class="hint">Les fichiers audio restent dans le stockage de ce navigateur sur cet appareil. Pense à garder une copie de tes fichiers d'origine.</div>
+ </div>
+</section>
+
+<section id="playerView" class="view">
+ <button class="back" id="playerBack">← Ma bibliothèque</button>
+ <div class="player-head"><div><h1 id="playerTitle">Morceau</h1><p id="playerSubtitle">Paroles synchronisées</p></div><div class="modebar"><button class="btn selected" id="originalMode">Avec la voix</button><button class="btn secondary" id="instrumentalMode">Instrumental</button><button class="btn secondary" id="editLyricsBtn">Modifier les paroles</button></div></div>
+ <div class="player">
+  <div class="lyrics-stage"><div class="lyrics-line" id="lyricsLine"><span class="word">Ajoute des paroles pour commencer</span></div></div>
+  <div class="progress"><span id="progressBar"></span></div>
+  <div class="controls" style="margin-top:17px">
+   <div class="transport"><button class="play" id="playBtn">▶</button><button class="btn secondary" id="restartBtn">↺ Recommencer</button><span class="time" id="timeDisplay">00:00 / 00:00</span></div>
+   <div class="field" style="min-width:170px;max-width:280px;flex:1"><label for="seek">Position dans le morceau</label><input class="range" id="seek" type="range" min="0" max="1000" value="0"></div>
+  </div>
+ </div>
+ <div class="panel" style="margin-top:15px">
+  <div class="calibration"><div><strong>Synchroniser les paroles</strong><p id="calibrationStatus">Lance la synchronisation, écoute le morceau original et marque chaque mot au moment où il est prononcé.</p></div><button class="btn big-tap" id="calibrateBtn">Commencer le calage</button></div>
+  <div class="hint">Astuce : tu peux aussi appuyer sur la barre d'espace pour marquer le mot suivant pendant le calage.</div>
+  <div class="word-list" id="wordList"></div>
+  <div class="actions"><button class="btn secondary" id="clearSyncBtn">Effacer le calage</button><button class="btn secondary" id="saveSyncBtn">Enregistrer la synchronisation</button></div>
+  <div class="notice">Le calage mot par mot est manuel dans cette première version. La détection automatique des mots et leur durée sera une prochaine étape.</div>
+ </div>
+</section>
+</div>
+<audio id="audio" preload="metadata"></audio>
+<script>
+const DB_NAME='flow_music_library_v1', STORE='tracks';
+let db, tracks=[], current=null, mode='original', calibrating=false, wordIndex=0, raf=null;
+const $=id=>document.getElementById(id);
+const audio=$('audio');
+function openDB(){return new Promise((resolve,reject)=>{const req=indexedDB.open(DB_NAME,1);req.onupgradeneeded=()=>req.result.createObjectStore(STORE,{keyPath:'id'});req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function dbAction(type,data){return new Promise((resolve,reject)=>{const tx=db.transaction(STORE,type),store=tx.objectStore(STORE);let req=type==='readonly'?store.getAll():store.put(data);req.onsuccess=()=>resolve(req.result);req.onerror=()=>reject(req.error)})}
+function show(id){document.querySelectorAll('.view').forEach(v=>v.classList.remove('active'));$(id).classList.add('active')}
+function fmt(s){if(!isFinite(s))s=0;return `${String(Math.floor(s/60)).padStart(2,'0')}:${String(Math.floor(s%60)).padStart(2,'0')}`}
+function wordsOf(text){return text.trim().split(/\s+/).filter(Boolean)}
+function renderLibrary(){
+ $('trackCount').textContent=`${tracks.length} morceau${tracks.length>1?'s':''}`;
+ const root=$('library');root.innerHTML='';
+ if(!tracks.length){root.innerHTML='<div class="empty"><div style="font-size:30px;margin-bottom:10px">♫</div><strong>Ta bibliothèque est vide</strong><p style="margin-top:6px">Importe ton premier morceau pour commencer.</p></div>';return}
+ tracks.sort((a,b)=>b.updated-a.updated).forEach(t=>{const el=document.createElement('article');el.className='track';const top=document.createElement('div');top.innerHTML='<div class="track-top"><div class="cover">♫</div><span class="pill">MORCEAU</span></div>';const info=document.createElement('div');const h=document.createElement('h3');h.textContent=t.title;const sm=document.createElement('small');sm.textContent=`${t.words.length} mots · ${t.sync.filter(x=>x!==null).length} synchronisés`;info.append(h,sm);const acts=document.createElement('div');acts.className='track-actions';const open=document.createElement('button');open.className='btn';open.textContent='Ouvrir';open.onclick=()=>openTrack(t.id);const del=document.createElement('button');del.className='btn ghost';del.textContent='Supprimer';del.onclick=()=>deleteTrack(t.id);acts.append(open,del);el.append(top,info,acts);root.append(el)})
+}
+function selectedFile(id,nameId){const f=$(id).files[0];$(nameId).textContent=f?`${f.name} · ${(f.size/1024/1024).toFixed(1)} Mo`:'Aucun fichier sélectionné'}
+$('originalFile').onchange=()=>selectedFile('originalFile','originalName');
+$('instrumentalFile').onchange=()=>selectedFile('instrumentalFile','instrumentalName');
+$('newTrackBtn').onclick=()=>{resetImport();show('importView')};
+document.querySelectorAll('[data-back]').forEach(b=>b.onclick=()=>show('libraryView'));
+function resetImport(){$('trackTitle').value='';$('lyricsInput').value='';$('originalFile').value='';$('instrumentalFile').value='';$('originalName').textContent='Aucun fichier sélectionné';$('instrumentalName').textContent='Aucun fichier sélectionné'}
+$('saveTrackBtn').onclick=async()=>{
+ const title=$('trackTitle').value.trim(),o=$('originalFile').files[0],i=$('instrumentalFile').files[0],lyrics=$('lyricsInput').value.trim();
+ if(!title||!o||!i){alert('Ajoute un titre et les deux fichiers audio.');return}
+ if(!lyrics){if(!confirm('Tu n’as pas encore ajouté les paroles. Enregistrer quand même ?'))return}
+ const text=lyrics;const t={id:crypto.randomUUID(),title,original:{name:o.name,type:o.type,blob:o},instrumental:{name:i.name,type:i.type,blob:i},lyrics:text,words:wordsOf(text),sync:wordsOf(text).map(()=>null),updated:Date.now()};
+ try{await dbAction('readwrite',t);tracks.push(t);renderLibrary();show('libraryView')}catch(e){alert('Impossible d’enregistrer ce morceau. Vérifie l’espace disponible sur ton appareil.')}
+};
+async function deleteTrack(id){if(!confirm('Supprimer ce morceau et ses fichiers de la bibliothèque ?'))return;const tx=db.transaction(STORE,'readwrite');tx.objectStore(STORE).delete(id);tx.oncomplete=async()=>{tracks=tracks.filter(t=>t.id!==id);renderLibrary()}}
+function persistCurrent(){if(!current)return;current.updated=Date.now();dbAction('readwrite',current).catch(()=>{})}
+function openTrack(id){current=tracks.find(t=>t.id===id);if(!current)return;mode='original';$('playerTitle').textContent=current.title;$('playerSubtitle').textContent='Paroles synchronisées';setModeButtons();loadAudio();renderWords();renderLyrics();show('playerView');}
+function loadAudio(){const source=current[mode];if(!source?.blob){audio.removeAttribute('src');audio.load();return}audio.src=URL.createObjectURL(source.blob);audio.load()}
+function setModeButtons(){$('originalMode').className=mode==='original'?'btn selected':'btn secondary';$('instrumentalMode').className=mode==='instrumental'?'btn selected':'btn secondary'}
+$('originalMode').onclick=()=>switchMode('original');$('instrumentalMode').onclick=()=>switchMode('instrumental');
+function switchMode(m){const time=audio.currentTime;const wasPlaying=!audio.paused;mode=m;loadAudio();audio.addEventListener('loadedmetadata',function once(){audio.currentTime=Math.min(time,audio.duration||time);if(wasPlaying)audio.play().catch(()=>{});audio.removeEventListener('loadedmetadata',once)});setModeButtons()}
+$('playerBack').onclick=()=>{stopCalibration();audio.pause();show('libraryView');tracks=tracks.map(t=>t.id===current?.id?current:t);renderLibrary();persistCurrent()};
+$('editLyricsBtn').onclick=()=>{const updated=prompt('Modifie ou colle les paroles :',current.lyrics);if(updated===null)return;current.lyrics=updated;current.words=wordsOf(updated);current.sync=current.words.map(()=>null);audio.pause();persistCurrent();renderWords();renderLyrics()};
+function renderWords(){const root=$('wordList');root.innerHTML='';current.words.forEach((w,n)=>{const c=document.createElement('span');c.className='chip';c.textContent=`${n+1}. ${w}`;root.append(c)})}
+function renderLyrics(){const root=$('lyricsLine');root.innerHTML='';if(!current.words.length){root.textContent='Ajoute des paroles pour commencer';return}current.words.forEach((w,n)=>{const s=document.createElement('span');s.className='word';s.id='w'+n;s.textContent=w;root.append(s)})}
+function currentWordAt(time){let idx=-1;for(let n=0;n<current.sync.length;n++){if(current.sync[n]!==null&&current.sync[n]<=time)idx=n;else if(current.sync[n]!==null&&current.sync[n]>time)break}return idx}
+function updateLyrics(){if(!current)return;const idx=currentWordAt(audio.currentTime);current.words.forEach((_,n)=>{const el=$('w'+n);if(!el)return;el.className='word'+(n<idx?' done':n===idx?' current':'')});const p=audio.duration?audio.currentTime/audio.duration:0;$('progressBar').style.width=(p*100)+'%';$('seek').value=Math.round(p*1000);$('timeDisplay').textContent=`${fmt(audio.currentTime)} / ${fmt(audio.duration)}`;document.querySelectorAll('.chip').forEach((c,n)=>{c.className='chip'+(current.sync[n]!==null?' done':'')+(n===wordIndex&&calibrating?' next':'')})}
+function tick(){updateLyrics();raf=requestAnimationFrame(tick)}function startTick(){if(raf)cancelAnimationFrame(raf);tick()}startTick();
+$('playBtn').onclick=()=>{if(audio.paused)audio.play().catch(()=>alert('Choisis d’abord un morceau audio valide.'));else audio.pause()};
+audio.onplay=()=>$('playBtn').textContent='Ⅱ';audio.onpause=()=>$('playBtn').textContent='▶';$('restartBtn').onclick=()=>{audio.currentTime=0;audio.play().catch(()=>{})};
+$('seek').oninput=e=>{if(audio.duration)audio.currentTime=(Number(e.target.value)/1000)*audio.duration};
+$('calibrateBtn').onclick=()=>{if(!current.words.length){alert('Ajoute d’abord les paroles.');return}if(!calibrating){mode='original';setModeButtons();loadAudio();calibrating=true;wordIndex=0;current.sync=current.words.map(()=>null);audio.addEventListener('loadedmetadata',function once(){audio.currentTime=0;audio.play().catch(()=>{});audio.removeEventListener('loadedmetadata',once)});$('calibrateBtn').textContent='Arrêter le calage';$('calibrationStatus').textContent='Écoute le morceau et appuie sur « Mot suivant » au début de chaque mot.'}else stopCalibration();renderWords()};
+function markWord(){if(!calibrating||!current)return;if(wordIndex>=current.words.length){stopCalibration();return}current.sync[wordIndex]=audio.currentTime;wordIndex++;if(wordIndex>=current.words.length){stopCalibration();$('calibrationStatus').textContent='Tous les mots ont été marqués. Tu peux réécouter et corriger en recommençant le calage.'}updateLyrics()}
+function stopCalibration(){if(!calibrating)return;calibrating=false;audio.pause();$('calibrateBtn').textContent='Recommencer le calage';renderWords();updateLyrics()}
+$('calibrateBtn').addEventListener('contextmenu',e=>e.preventDefault());
+$('clearSyncBtn').onclick=()=>{if(!confirm('Effacer tous les temps synchronisés ?'))return;current.sync=current.words.map(()=>null);wordIndex=0;persistCurrent();renderWords();updateLyrics()};
+$('saveSyncBtn').onclick=()=>{persistCurrent();$('calibrationStatus').textContent='Synchronisation enregistrée dans ta bibliothèque.'};
+document.addEventListener('keydown',e=>{if(e.code==='Space'&&calibrating&&document.activeElement.tagName!=='TEXTAREA'&&document.activeElement.tagName!=='INPUT'){e.preventDefault();markWord()}});
+$('calibrateBtn').addEventListener('click',()=>{});
+const originalCalibrateClick=$('calibrateBtn').onclick;
+$('calibrateBtn').onclick=()=>{if(calibrating){markWord();if(!calibrating)return;$('calibrateBtn').textContent='Mot suivant · '+(wordIndex+1)+'/'+current.words.length}else originalCalibrateClick()};
+(async()=>{try{db=await openDB();tracks=await dbAction('readonly');renderLibrary()}catch(e){$('library').innerHTML='<div class="empty">Le stockage local n’est pas disponible dans ce navigateur.</div>'}})();
+</script>
+</body>
+</html>
